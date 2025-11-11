@@ -19,7 +19,7 @@ app.use(cors())
 app.use(express.json())
 
 // custom middleware 
-const verifyFirebaseToken = (req, res, next) => {
+const verifyFirebaseToken = async(req, res, next) => {
     if (!req.headers.authorization) {
         return res.status(401).send({ message: "Unauthorized access" })
     }
@@ -30,7 +30,7 @@ const verifyFirebaseToken = (req, res, next) => {
 
     // verifying token 
     try {
-    const decode=  admin.auth().verifyIdToken(token)  
+    const decode= await admin.auth().verifyIdToken(token)  
     req.token_email=decode.email
     next()
     } catch {
@@ -61,8 +61,10 @@ async function run() {
 
         // handle apis here 
         app.get("/my-transactions", verifyFirebaseToken, async (req, res) => {
-
             const email = req.query.email
+            if(req.token_email!==email){
+                return res.status(403).send({message:"Forbidden access"})
+            }
             let query = {}
             if (email) {
                 query.email = email
