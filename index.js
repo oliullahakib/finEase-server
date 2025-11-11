@@ -31,6 +31,15 @@ async function run() {
     const db = client.db("FinEase")
     const transactionsCollection=db.collection("transactions")
     // handle apis here 
+    app.get("/my-transactions",async(req,res)=>{
+        const email = req.query.email
+        let query={}
+        if(email){
+            query.email=email
+        }
+        const result = await transactionsCollection.find(query).toArray()
+        res.send(result)
+    })
     app.post('/add-transaction',async(req,res)=>{
         const newTransaction = req.body
         const result = await transactionsCollection.insertOne(newTransaction)
