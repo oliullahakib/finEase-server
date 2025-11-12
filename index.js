@@ -89,6 +89,16 @@ async function run() {
             const result = await transactionsCollection.insertOne(newTransaction)
             res.send(result)
         })
+        app.put('/transaction/update/:id',verifyFirebaseToken,async(req,res)=>{
+            const id = req.params.id
+            const updateTransaction = req.body
+            const query = {_id:new ObjectId(id)}
+            const update = {
+                $set:updateTransaction
+            }
+            const result = await transactionsCollection.updateOne(query,update)
+            res.send(result)
+        })
         app.delete(`/transaction/delete/:id`,verifyFirebaseToken,async(req,res)=>{
             const id = req.params.id
             const query = {_id:new ObjectId(id)}
