@@ -64,10 +64,12 @@ async function run() {
             const email = req.query.email
             const category = req.query.category
             const type = req.query.type
-            console.log(type)
+            const sortValue = req.query.sort
+            console.log(sortValue)
             if (req.token_email !== email) {
                 return res.status(403).send({ message: "Forbidden access" })
             }
+            let sort = {}
             let query = {}
             if (email) {
                 query.email = email
@@ -77,7 +79,13 @@ async function run() {
                 if(type){
                     query.type= type
                 }
-                const result = await transactionsCollection.find(query).toArray()
+                if(sortValue==="amount"){
+                    sort.amount=-1
+                }
+                if(sortValue==="date"){
+                    sort.date=-1
+                }
+                const result = await transactionsCollection.find(query).sort(sort).toArray()
                 return res.send(result)
             }
             res.send({ message: "Expect an Email", data: {} })
