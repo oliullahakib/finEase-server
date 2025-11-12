@@ -63,7 +63,8 @@ async function run() {
         app.get("/my-transactions", verifyFirebaseToken, async (req, res) => {
             const email = req.query.email
             const category = req.query.category
-            console.log(category)
+            const type = req.query.type
+            console.log(type)
             if (req.token_email !== email) {
                 return res.status(403).send({ message: "Forbidden access" })
             }
@@ -72,6 +73,9 @@ async function run() {
                 query.email = email
                 if(category){
                     query.category= category
+                }
+                if(type){
+                    query.type= type
                 }
                 const result = await transactionsCollection.find(query).toArray()
                 return res.send(result)
