@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var admin = require("firebase-admin");
 var serviceAccount = require("./finease-admin-sdk.json");
 
@@ -11,7 +11,7 @@ const port = process.env.PORT || 3000
 
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount)
 });
 
 // middleware
@@ -19,22 +19,22 @@ app.use(cors())
 app.use(express.json())
 
 // custom middleware 
-const verifyFirebaseToken = async(req, res, next) => {
+const verifyFirebaseToken = async (req, res, next) => {
     if (!req.headers.authorization) {
         return res.status(401).send({ message: "Unauthorized access" })
     }
     const token = req.headers.authorization.split(" ")[1]
-    if(!token){
-       return res.status(401).send({ message: "Unauthorized access" }) 
+    if (!token) {
+        return res.status(401).send({ message: "Unauthorized access" })
     }
 
     // verifying token 
     try {
-    const decode= await admin.auth().verifyIdToken(token)  
-    req.token_email=decode.email
-    next()
+        const decode = await admin.auth().verifyIdToken(token)
+        req.token_email = decode.email
+        next()
     } catch {
-       return res.status(401).send({ message: "Unauthorized access" })  
+        return res.status(401).send({ message: "Unauthorized access" })
     }
 }
 
@@ -62,23 +62,39 @@ async function run() {
         // handle apis here 
         app.get("/my-transactions", verifyFirebaseToken, async (req, res) => {
             const email = req.query.email
-            if(req.token_email!==email){
-                return res.status(403).send({message:"Forbidden access"})
+            const category = req.query.category
+            console.log(category)
+            if (req.token_email !== email) {
+                return res.status(403).send({ message: "Forbidden access" })
             }
             let query = {}
             if (email) {
                 query.email = email
+                if(category){
+                    query.category= category
+                }
                 const result = await transactionsCollection.find(query).toArray()
                 return res.send(result)
             }
             res.send({ message: "Expect an Email", data: {} })
         })
-        app.post('/add-transaction',verifyFirebaseToken ,async (req, res) => {
+        app.get('/transaction/:id', verifyFirebaseToken, async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await transactionsCollection.findOne(query)
+            res.send(result)
+        })
+        app.post('/add-transaction', verifyFirebaseToken, async (req, res) => {
             const newTransaction = req.body
             const result = await transactionsCollection.insertOne(newTransaction)
             res.send(result)
         })
-
+        app.delete(`/transaction/delete/:id`,verifyFirebaseToken,async(req,res)=>{
+            const id = req.params.id
+            const query = {_id:new ObjectId(id)}
+            const result= await transactionsCollection.deleteOne(query)
+            res.send(result)
+        })
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
