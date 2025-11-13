@@ -1,3 +1,5 @@
 node_modules
 .env
 finease-admin-sdk.json
+.vercel
+encode.js
